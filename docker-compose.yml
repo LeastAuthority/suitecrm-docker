@@ -1,0 +1,76 @@
+services:
+  mariadb:
+    image: mariadb:10.11.18-jammy@sha256:8020e05c4c498d06c87f0a1db010eb79bd6f8fb30e9b763d4690c34ce1e61008
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-suitecrm}
+      MYSQL_USER: ${DB_USER:-suitecrm}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-suitecrm}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      TZ: ${TZ:-UTC}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    # Prevents container to hang the host
+    # Requires `... --compatibility run ...`
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 256M
+
+  suitecrm:
+    build:
+      context: src
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-UTC}
+      DB_HOST: mariadb
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-suitecrm}
+      DB_USER: ${DB_USER:-suitecrm}
+      DB_PASSWORD: ${DB_PASSWORD:-suitecrm}
+      DATABASE_SERVER_VERSION: ${DATABASE_SERVER_VERSION:-10.11-MariaDB}
+      SITE_URL: ${SITE_URL:-http://localhost:8080}
+      SUITECRM_ADMIN_USER: ${SUITECRM_ADMIN_USER:-admin}
+      SUITECRM_ADMIN_PASSWORD: ${SUITECRM_ADMIN_PASSWORD:-adminpass}
+      SUITECRM_DEMO_DATA: ${SUITECRM_DEMO_DATA:-no}
+      SUITECRM_IGNORE_SYSTEM_CHECK_WARNINGS: ${SUITECRM_IGNORE_SYSTEM_CHECK_WARNINGS:-false}
+      SUITECRM_AUTO_INSTALL: ${SUITECRM_AUTO_INSTALL:-1}
+      TEMPORARY_FILE_BASE_DIR: ${TEMPORARY_FILE_BASE_DIR:-tmp}
+      MESSENGER_LOG_LEVEL: ${MESSENGER_LOG_LEVEL:-error}
+      MESSENGER_LOG_FILE_NAME: ${MESSENGER_LOG_FILE_NAME:-}
+      MESSENGER_INTERNAL_ASYNC_TRANSPORT_DSN: ${MESSENGER_INTERNAL_ASYNC_TRANSPORT_DSN:-}
+      MESSENGER_INTERNAL_FAILURE_TRANSPORT_DSN: ${MESSENGER_INTERNAL_FAILURE_TRANSPORT_DSN:-}
+    ports:
+      - "${SUITECRM_HTTP_PORT:-8080}:80"
+    volumes:
+      - suitecrm_state:/var/lib/suitecrm
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    # Prevents container to hang the host
+    # Requires `... --compatibility run ...`
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 256M
+
+volumes:
+  mariadb_data:
+  suitecrm_state:
