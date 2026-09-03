@@ -1,0 +1,36 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'docker-compose.yml'
+      - 'src/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'docker-compose.yml'
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare service
+        id: prepare_service
+        uses: LeastAuthority/setup-docker-image@ee300e54f801db7fe7e933c7f44f586b0628e9b5 # v1.0.1
+        with:
+          context-dir: src
+          service-name: suitecrm
+
