@@ -1,0 +1,32 @@
+name: Cleanup
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  cleanup-old-images:
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - name: Delete tag from closed PR
+        # Because the actions/delete-package-versions can not be used to remove tags
+        # The ignore-versions is broken: https://github.com/actions/delete-package-versions/issues/120
+        uses: bots-house/ghcr-delete-image-action@3827559c68cb4dcdf54d813ea9853be6d468d3a4 #v1.1.0
+        with:
+          owner: "leastauthority"
+          name: "phreeli-mixservice"
+          token: "${{ github.token }}"
+          tag: "pr-${{ github.event.pull_request.number }}"
+        # Only if the pull request was not initiated from the develop or main branch
+        if: github.head_ref != 'develop' && github.head_ref != 'main'
+
+      - name: Delete old untagged images
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 #v5.0.0
+        with:
+          package-name: "phreeli-mixservice"
+          package-type: "container"
+          min-versions-to-keep: 7
+          delete-only-untagged-versions: "true"
