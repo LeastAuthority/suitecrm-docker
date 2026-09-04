@@ -4,8 +4,9 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html \
     SUITECRM_STATE_DIR=/var/lib/suitecrm \
     TZ=UTC
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN apt-get -q clean && \
+    apt-get -q update && \
+    apt-get install -y --no-install-recommends \
     cron \
     curl \
     default-mysql-client \
@@ -20,8 +21,11 @@ RUN apt-get update \
     libzip-dev \
     supervisor \
     unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" \
+    && \
+    apt-get -q clean
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install -j"$(nproc)" \
     curl \
     gd \
     intl \
@@ -31,23 +35,10 @@ RUN apt-get update \
     pdo_mysql \
     soap \
     zip \
-    && pecl install apcu \
-    && docker-php-ext-enable apcu \
-    && a2enmod expires headers rewrite \
-    && rm -rf /var/lib/apt/lists/*
-
-USER www-data
-ENV SUITECRM_VERSION=7.15.2
-ENV SUITECRM_CHECKSUM=9d66c7f6e14f4f1dc4c4605185be6fb97ad1902c0026ff326a7c20e9a4901180
-ENV SUITECRM_TMP=/tmp/suitecrm
-RUN curl --location --no-progress-meter --output "${SUITECRM_TMP}".zip \
-    https://github.com/SuiteCRM/SuiteCRM/releases/download/v"${SUITECRM_VERSION}"/SuiteCRM-"${SUITECRM_VERSION}".zip \
-    && test "$(sha256sum "${SUITECRM_TMP}".zip | cut -d' ' -f1)" = "${SUITECRM_CHECKSUM}"
-RUN unzip -q "${SUITECRM_TMP}".zip -d "${SUITECRM_TMP}" \
-    && mv "${SUITECRM_TMP}"/SuiteCRM*/* /var/www/html/ \
-    && rm -rf "${SUITECRM_TMP}"*
-
-USER root
+    && \
+    pecl install apcu && \
+    docker-php-ext-enable apcu && \
+    a2enmod expires headers rewrite
 
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY php.ini /usr/local/etc/php/conf.d/zz-suitecrm.ini
@@ -66,6 +57,19 @@ RUN chmod 0644 /etc/cron.d/suitecrm \
     && chmod +x /usr/local/bin/entrypoint.sh \
     && touch /var/log/cron.log \
     && chown -R www-data:www-data /var/lib/suitecrm /var/log/cron.log
+
+USER www-data
+ENV SUITECRM_TMP=/tmp/suitecrm
+ENV SUITECRM_VERSION=7.15.2
+ENV SUITECRM_CHECKSUM=9d66c7f6e14f4f1dc4c4605185be6fb97ad1902c0026ff326a7c20e9a4901180
+RUN curl --location --no-progress-meter --output "${SUITECRM_TMP}".zip \
+    https://github.com/SuiteCRM/SuiteCRM/releases/download/v"${SUITECRM_VERSION}"/SuiteCRM-"${SUITECRM_VERSION}".zip \
+    && test "$(sha256sum "${SUITECRM_TMP}".zip | cut -d' ' -f1)" = "${SUITECRM_CHECKSUM}"
+RUN unzip -q "${SUITECRM_TMP}".zip -d "${SUITECRM_TMP}" \
+    && mv "${SUITECRM_TMP}"/SuiteCRM*/* /var/www/html/ \
+    && rm -rf "${SUITECRM_TMP}"*
+
+USER root
 
 WORKDIR /var/www/html
 
