@@ -80,7 +80,8 @@ USER root
 
 WORKDIR /var/lib/suitecrm
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 CMD curl -fsS http://127.0.0.1/ >/dev/null || exit 1
+ENV SUITECRM_HTTP_PORT=8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 CMD curl -fsS "http://127.0.0.1:${SUITECRM_HTTP_PORT}/index.php" >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/suitecrm.conf"]

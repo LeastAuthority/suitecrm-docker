@@ -43,7 +43,7 @@ services:
     volumes:
       - suitecrm_state:/var/lib/suitecrm
     healthcheck:
-      test: ["CMD-SHELL", "curl --location --fail --silent --show-error http://127.0.0.1/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl --location --fail --silent --show-error http://127.0.0.1:$${SUITECRM_HTTP_PORT}/index.php >/dev/null || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 10
