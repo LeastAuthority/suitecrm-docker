@@ -39,7 +39,7 @@ jobs:
       - name: Get version info
         id: get_version
         run: |
-          echo "SUITCRM_VERSION=$(grep -Po 'SUITECRM_VERSION=[.\d]+' src/Dockerfile | cut -d'=' -f2)" >> $GITHUB_ENV
+          echo "SUITECRM_VERSION=$(grep -Po 'SUITECRM_VERSION=[.\d]+' src/Dockerfile | cut -d'=' -f2)" >> $GITHUB_ENV
           echo "SUITECRM_BUILD=$(date "+%Y%M%d%H%m")" >> $GITHUB_ENV
 
       - name: Build
