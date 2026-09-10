@@ -46,6 +46,7 @@ COPY php.ini /usr/local/etc/php/conf.d/zz-suitecrm.ini
 COPY crontab /etc/cron.d/suitecrm
 COPY supervisord.conf /etc/supervisor/conf.d/suitecrm.conf
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY suitecrmsilentinstall.php /usr/local/bin/suitecrmsilentinstall.php
 
 RUN mkdir -p \
     "${SUITECRM_SRC_DIR}" \

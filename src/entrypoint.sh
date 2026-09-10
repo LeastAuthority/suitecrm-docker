@@ -72,7 +72,53 @@ else
   rm SuiteCRM-"${SUITECRM_VERSION}"
   fix_perm
   echo "done"
-  echo "[Entrypoint]: Not yet configured! Visit intall.php"
+  /usr/local/bin/apache2-foreground >> apache_si.log 2>&1 &
+  APACHE_PID=$!
+  # Wait for the install page (10 x 1 sec)
+  curl \
+    --head \
+    --fail \
+    --verbose \
+    --show-error \
+    --no-progress-meter \
+    --retry 10 \
+    --retry-delay 1 \
+    --retry-all-errors \
+    --retry-connrefused \
+    "http://127.0.0.1:${SUITECRM_HTTP_PORT}/install.php" \
+  || { \
+    echo "[Entrypoint]: SuiteCRM install page notfound!"; \
+    exit 1; \
+  }
+  php /usr/local/bin/suitecrmsilentinstall.php \
+  --install_location "${SUITECRM_STATE_DIR}" \
+  --db_host "${SUITECRM_DATABASE_HOST}" \
+  --db_user "${SUITECRM_DATABASE_USER}" \
+  --db_pass "${SUITECRM_DATABASE_PASSWORD}" \
+  --db_name "${SUITECRM_DATABASE_NAME}" \
+  --site_username "${SUITECRM_ADMIN_USER}" \
+  --site_pass "${SUITECRM_ADMIN_PASSWORD}" \
+  --site_host "${SUITECRM_HTTP_HOST}" \
+  --site_port "${SUITECRM_HTTP_PORT}" \
+  --site_name "SuiteCRM Silent Install"
+  # Wait for the login page (10 x 1 sec)
+  curl \
+    --head \
+    --fail \
+    --verbose \
+    --show-error \
+    --no-progress-meter \
+    --retry 10 \
+    --retry-delay 1 \
+    --retry-all-errors \
+    --retry-connrefused \
+    "http://127.0.0.1:${SUITECRM_HTTP_PORT}/index.php?module=Users&action=Login" \
+  || { \
+    echo "[Entrypoint]: SuiteCRM login page notfound!"; \
+    exit 1; \
+  }
+  kill -TERM "${APACHE_PID}"
+  echo "[Entrypoint]: SuiteCRM configuration completed"; \
 fi
 
 echo "[Entrypoint]: SuiteCRM init process completed."
