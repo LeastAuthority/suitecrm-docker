@@ -43,13 +43,13 @@ if [ -s suitecrm_version.php ]; then
   CURRENT_VERSION="$(grep -Po '(?<=^\$suitecrm_version = ).+' "${SUITECRM_STATE_DIR}"/suitecrm_version.php | cut -d"'" -f2)"
   echo "[Entrypoint]: Version ${CURRENT_VERSION} detected."
   if [ ! -s config.php ]; then
-    echo "[Entrypoint]: Not yet configured! Visit intall.php"
+    echo "[Entrypoint]: Not yet configured! Visit install.php"
   elif [ "${CURRENT_VERSION}" = "${SUITECRM_VERSION}" ]; then
     echo "[Entrypoint]: Nothing to upgrade."
   else
     echo "[Entrypoint]: Upgrade required to ${SUITECRM_VERSION}."
     UPGRADE_VERSION_REX=${SUITECRM_UPGRADE_VERSION//./\\.}
-    UPGRADE_VERSION_REX=${SUITECRM_UPGRADE_VERSION/%x/}
+    UPGRADE_VERSION_REX=${UPGRADE_VERSION_REX/%x/}
     if [[ "${CURRENT_VERSION}" =~ ${UPGRADE_VERSION_REX} ]]; then
       ./vendor/bin/robo cache:clean --force
       ./vendor/bin/robo upgrade:suite \
@@ -72,7 +72,7 @@ else
   rm SuiteCRM-"${SUITECRM_VERSION}"
   fix_perm
   echo "done"
-  echo "[Entrypoint]: Not yet configured! Visit intall.php"
+  echo "[Entrypoint]: Not yet configured! Visit install.php"
 fi
 
 echo "[Entrypoint]: SuiteCRM init process completed."
