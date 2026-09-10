@@ -76,6 +76,18 @@ RUN curl --location --no-progress-meter --output "${SUITECRM_SRC_DIR}"/"${SUITEC
     https://github.com/SuiteCRM/SuiteCRM/releases/download/v"${SUITECRM_VERSION}"/"${SUITECRM_UPGRADE_ZIP}" \
     && test "$(sha256sum "${SUITECRM_SRC_DIR}"/"${SUITECRM_UPGRADE_ZIP}" | cut -d' ' -f1)" = "${SUITECRM_UPGRADE_CHECKSUM}"
 
+# OCI annotations to image
+LABEL org.opencontainers.image.authors="LeastAuthority" \
+      org.opencontainers.image.title="SuiteCRM" \
+      org.opencontainers.image.description="SuiteCRM - Open source CRM for the world" \
+      org.opencontainers.image.documentation="https://github.com/LeastAuthority/suitecrm-docker" \
+      org.opencontainers.image.base.name="docker.io/library/php:8.3-apache-bookworm" \
+      org.opencontainers.image.licenses="AGPL-3.0" \
+      org.opencontainers.image.source="https://github.com/LeastAuthority/suitecrm-docker" \
+      org.opencontainers.image.vendor="LeastAuthority" \
+      org.opencontainers.image.version="${SUITECRM_VERSION}" \
+      org.opencontainers.image.url="https://github.com/LeastAuthority/suitecrm-docker"
+
 USER root
 
 WORKDIR /var/lib/suitecrm
