@@ -1,0 +1,102 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'docker-compose.yml'
+      - 'src/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'docker-compose.yml'
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  docker:
+    name: Docker
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+      contents: read
+      packages: write
+    steps:
+      - name: Chechout
+        id: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+
+      - name: Log in to GitHub Container Registry
+        id: login
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f #v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version info
+        id: get_version
+        run: |
+          echo "SUITECRM_VERSION=$(grep -Po 'SUITECRM_VERSION=[.\d]+' src/Dockerfile | cut -d'=' -f2)" >> $GITHUB_ENV
+          echo "SUITECRM_BUILD=$(date "+%Y%m%d%H%M")" >> $GITHUB_ENV
+
+      - name: Build
+        id: build
+        uses: LeastAuthority/setup-docker-image@41235dbc208c87fdacc141d8cc80d44b5157085d # v1.0.2
+        with:
+          context-dir: ./src
+          service-name: "suitecrm"
+
+      - name: Test
+        id: test
+        env: # Prefer non-default value
+          SUITECRM_HTTP_PORT: 8888
+        run: |
+          # Print the available images and running containers before
+          docker images -a
+          docker ps -a
+          # Pull the missing images
+          docker compose pull --quiet
+          # Bring up the service(s)
+          docker compose up --detach
+          # Wait for the homepage (10 x 1 sec)
+          curl \
+            --location \
+            --head \
+            --fail \
+            --verbose \
+            --show-error \
+            --no-progress-meter \
+            --retry 10 \
+            --retry-delay 1 \
+            --retry-all-errors \
+            --retry-connrefused \
+            http://127.0.0.1:"${SUITECRM_HTTP_PORT}"/index.php \
+          || { \
+            echo ":x: Home page not found!" >> $GITHUB_STEP_SUMMARY; \
+            RET=1; \
+          }
+          # Print the logs for debugging purpose
+          docker compose logs
+          # Teardown the service(s)
+          docker compose down
+          # Print the available images and running containers after
+          docker images -a
+          docker ps -a
+          exit ${RET:-0}
+
+      - name: Push
+        id: push
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a #v7.3.0
+        env:
+          IMAGE_URL: ghcr.io/leastauthority/suitecrm
+        with:
+          context: ./src
+          push: true
+          tags: |
+            ${{ github.event_name == 'pull_request' && format('{0}:pr-{1}', env.IMAGE_URL, github.event.pull_request.number) || '' }}
+            ${{ github.ref_name == 'main' && format('{0}:{1}', env.IMAGE_URL, 'latest') || '' }}
+            ${{ github.ref_name == 'main' && format('{0}:{1}', env.IMAGE_URL, env.SUITECRM_VERSION)  || '' }}
+            ${{ github.ref_name == 'main' && format('{0}:{1}-{2}', env.IMAGE_URL, env.SUITECRM_VERSION, env.SUITECRM_BUILD)  || '' }}

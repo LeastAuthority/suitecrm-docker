@@ -1,0 +1,47 @@
+services:
+  mariadb:
+    image: mariadb:10.11.18-jammy@sha256:8020e05c4c498d06c87f0a1db010eb79bd6f8fb30e9b763d4690c34ce1e61008
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${SUITECRM_DATABASE_NAME:-suitecrm}
+      MARIADB_USER: ${SUITECRM_DATABASE_USER:-suitecrm}
+      MARIADB_PASSWORD: ${SUITECRM_DATABASE_PASSWORD:-suitecrm}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-rootpass}
+      TZ: ${TZ:-UTC}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$$MARIADB_USER -p$$MARIADB_PASSWORD --silent || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  suitecrm:
+    build:
+      context: src
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-UTC}
+      SUITECRM_ADMIN_USER: ${SUITECRM_ADMIN_USER:-admin}
+      SUITECRM_HTTP_PORT: ${SUITECRM_HTTP_PORT:-8080}
+    ports:
+      - "${SUITECRM_HTTP_PORT:-8080}:${SUITECRM_HTTP_PORT:-8080}"
+    volumes:
+      - suitecrm_state:/var/lib/suitecrm
+    healthcheck:
+      test: ["CMD-SHELL", "curl --location --fail --silent --show-error http://127.0.0.1:$${SUITECRM_HTTP_PORT}/index.php >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+volumes:
+  mariadb_data:
+  suitecrm_state:
