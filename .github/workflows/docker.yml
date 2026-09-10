@@ -54,9 +54,11 @@ jobs:
         env: # Prefer non-default value
           SUITECRM_HTTP_PORT: 8888
         run: |
-          # Print the available images and containers before
+          # Print the available images and running containers before
           docker images -a
           docker ps -a
+          # Pull the missing images
+          docker compose pull --quiet
           # Bring up the service(s)
           docker compose up --detach
           # Wait for the homepage (10 x 1 sec)
@@ -80,7 +82,7 @@ jobs:
           docker compose logs
           # Teardown the service(s)
           docker compose down
-          # Print the available images and containers after
+          # Print the available images and running containers after
           docker images -a
           docker ps -a
           exit ${RET:-0}
