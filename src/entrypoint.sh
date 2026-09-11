@@ -14,10 +14,27 @@ fi
 # Save the current directory
 __CWD="$(pwd)"
 
+# logging functions
+# Credits: https://github.com/MariaDB/mariadb-docker/blob/master/docker-entrypoint.sh
+suitecrm_log() {
+  local type="${1^^}"; shift
+  printf '%s %s entrypoint: %s\n' "$(date "+%F %T,%3N")" "$type" "$*"
+}
+suitecrm_info() {
+  suitecrm_log INFO "$@"
+}
+suitecrm_warn() {
+  suitecrm_log WARN "$@" >&2
+}
+suitecrm_error() {
+  suitecrm_log ERROR "$@" >&2
+  exit 1
+}
+
 # Clean exit
 on_exit () {
   cd "${__CWD}"
-  echo "[Entrypoint]: SuiteCRM init process done."
+  suitecrm_info "Initialization process terminated"
 }
 
 trap "on_exit" EXIT
@@ -48,21 +65,21 @@ adapt_config () {
   ensure_line "\$sugar_config['cron']['allowed_cron_users'][-1] = '${WEB_USER}';" config_override.php
 }
 
-echo "[Entrypoint]: SuiteCRM init process started."
+suitecrm_info "Initialization process started"
 
 # Ensure work is done in the state directory
 [ "${__CWD}" = "${SUITECRM_STATE_DIR}" ] || cd "${SUITECRM_STATE_DIR}"
 
 if [ -s suitecrm_version.php ]; then
-  fix_perm  
+  fix_perm
   CURRENT_VERSION="$(grep -Po '(?<=^\$suitecrm_version = ).+' "${SUITECRM_STATE_DIR}"/suitecrm_version.php | cut -d"'" -f2)"
-  echo "[Entrypoint]: Version ${CURRENT_VERSION} detected."
+  suitecrm_info "Version ${CURRENT_VERSION} detected"
   if [ ! -s config.php ]; then
-    echo "[Entrypoint]: Not yet configured! Visit install.php"
+    suitecrm_warn "Not yet configured! Visit install.php"
   elif [ "${CURRENT_VERSION}" = "${SUITECRM_VERSION}" ]; then
-    echo "[Entrypoint]: Nothing to upgrade."
+    suitecrm_info "Nothing to upgrade"
   else
-    echo "[Entrypoint]: Upgrade required to ${SUITECRM_VERSION}."
+    suitecrm_info "Upgrade required to ${SUITECRM_VERSION}"
     UPGRADE_VERSION_REX=${SUITECRM_UPGRADE_VERSION//./\\.}
     UPGRADE_VERSION_REX=${UPGRADE_VERSION_REX/%x/}
     if [[ "${CURRENT_VERSION}" =~ ${UPGRADE_VERSION_REX} ]]; then
@@ -73,12 +90,11 @@ if [ -s suitecrm_version.php ]; then
       . "${SUITECRM_ADMIN_USER}"
       fix_perm
     else
-      echo "[Entrypoint]: Can not upgrade this version!"
-      exit 1
+      suitecrm_error "Can not upgrade this version!"
     fi
   fi
 else
-  echo -n "[Entrypoint]: Version not detected. Installing ${SUITECRM_VERSION}... "
+  suitecrm_info "Version not detected. Installing ${SUITECRM_VERSION}..."
   # Create a symlink for the sub-directory we want to skip
   ln -s . SuiteCRM-"${SUITECRM_VERSION}"
   # Extract the archive in the state directory
@@ -86,12 +102,10 @@ else
   # Remove the symlink - the sub-directory has been skipped
   rm SuiteCRM-"${SUITECRM_VERSION}"
   fix_perm
-  echo "done"
-  echo "[Entrypoint]: Not yet configured! Visit install.php"
+  suitecrm_info "Installation completed"
+  suitecrm_warn "Not yet configured! Visit install.php"
 fi
 
 adapt_config
-
-echo "[Entrypoint]: SuiteCRM init process completed."
 
 exec "$@"
