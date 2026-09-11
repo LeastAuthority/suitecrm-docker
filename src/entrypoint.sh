@@ -24,13 +24,28 @@ trap "on_exit" EXIT
 
 fix_perm () {
   [ -f config.php ] || touch config.php
-  [ -f config_override.php ] || touch config_override.php
+  [ -f config_override.php ] || echo '<?php' > config_override.php
   [ -f .htaccess ] || touch .htaccess
   [ -d php-sessions ] || mkdir php-sessions
   chown -R "${WEB_USER}":"${WEB_GROUP}" .
   chmod -R u+wrX,go+rX,go-w .
   chmod -R ug+wrX cache custom modules themes data upload config_override.php .htaccess php-sessions
   chmod +x vendor/bin/*
+}
+
+# Ensure a line is present in a file
+ensure_line () {
+  LINE="${1:?No line specified!}"
+  FILE="${2:?No file specified!}"
+  grep -qxF "${LINE}" "${FILE}" || echo "${LINE}" >> "${FILE}"
+}
+
+# The configuration needs to be adapted
+adapt_config () {
+  # We need a new line to work at the end of config_override.php
+  sed -i -e '$a\' config_override.php
+  # The apache user needs to be accepted for the cron jobs
+  ensure_line "\$sugar_config['cron']['allowed_cron_users'][-1] = '${WEB_USER}';" config_override.php
 }
 
 echo "[Entrypoint]: SuiteCRM init process started."
@@ -74,6 +89,8 @@ else
   echo "done"
   echo "[Entrypoint]: Not yet configured! Visit install.php"
 fi
+
+adapt_config
 
 echo "[Entrypoint]: SuiteCRM init process completed."
 
