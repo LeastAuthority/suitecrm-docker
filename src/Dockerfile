@@ -9,7 +9,6 @@ ENV WEB_USER=www-data \
 RUN apt-get -q clean && \
     apt-get -q update && \
     apt-get install -y --no-install-recommends \
-    cron \
     curl \
     default-mysql-client \
     libcurl4-openssl-dev \
@@ -43,7 +42,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
 
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY php.ini /usr/local/etc/php/conf.d/zz-suitecrm.ini
-COPY crontab /etc/cron.d/suitecrm
+COPY cron.sh /usr/local/bin/cron.sh
 COPY supervisord.conf /etc/supervisor/conf.d/suitecrm.conf
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
@@ -53,7 +52,7 @@ RUN mkdir -p \
     /var/log/supervisor \
     /var/run/supervisor
 
-RUN chmod 0644 /etc/cron.d/suitecrm \
+RUN chmod 0755 /usr/local/bin/cron.sh \
     && chmod +x /usr/local/bin/entrypoint.sh \
     && touch /var/log/cron.log \
     && chown -R "${WEB_USER}:${WEB_GROUP}" \
