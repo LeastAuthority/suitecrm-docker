@@ -24,7 +24,7 @@ trap "on_exit" EXIT
 
 fix_perm () {
   [ -f config.php ] || touch config.php
-  [ -f config_override.php ] || touch config_override.php
+  [ -f config_override.php ] || echo '<?php' > config_override.php
   [ -f .htaccess ] || touch .htaccess
   [ -d php-sessions ] || mkdir php-sessions
   chown -R "${WEB_USER}":"${WEB_GROUP}" .
