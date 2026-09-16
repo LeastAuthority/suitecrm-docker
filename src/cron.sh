@@ -14,7 +14,7 @@ fi
 # Prefix each line passed via stdin as formated log and ensure a proper new-line
 log_line () {
   LEVEL="${1?No level specified}"
-  sed -e "s/^/$(date "+%F %T,%3N") "${LEVEL}" cron: /" -e '$a\'
+  sed -e "s/^/$(date "+%F %T.%6N") "${LEVEL}" cron: /" -e '$a\'
 }
 
 # Call the cron.php job every minute while processing its stdout as INFO,
