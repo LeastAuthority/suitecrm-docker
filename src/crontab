@@ -1,5 +1,0 @@
-SHELL=/bin/sh
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-SUITECRM_STATE_DIR=/var/lib/suitecrm
-
-* * * * * www-data php -f "${SUITECRM_STATE_DIR}"/cron.php >"${SUITECRM_STATE_DIR}"/cron.log 2>&1
