@@ -1,10 +1,6 @@
 FROM php:8.3-apache-bookworm@sha256:fa8852a2e01747ffe8c8768bfd6bbc2f296f974aa0de90ee157a66664996d263
 
-ENV WEB_USER=www-data \
-    WEB_GROUP=www-data \
-    SUITECRM_STATE_DIR=/var/lib/suitecrm \
-    SUITECRM_SRC_DIR=/src/suitecrm \
-    TZ=UTC
+ENV TZ=UTC
 
 RUN apt-get -q clean && \
     apt-get -q update && \
@@ -39,6 +35,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
     pecl install apcu && \
     docker-php-ext-enable apcu && \
     a2enmod expires headers rewrite
+
+ENV WEB_USER=www-data \
+    WEB_GROUP=www-data \
+    SUITECRM_STATE_DIR=/var/lib/suitecrm \
+    SUITECRM_SRC_DIR=/src/suitecrm \
+    SUITECRM_LOG_DIR=/var/log/suitecrm \
+    SUITECRM_LOG_ACCESS_MAX_NUM=5 \
+    SUITECRM_LOG_ACCESS_MAX_LEN=5M
 
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY php.ini /usr/local/etc/php/conf.d/zz-suitecrm.ini
