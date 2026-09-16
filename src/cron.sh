@@ -20,6 +20,6 @@ log_line () {
 # Call the cron.php job every minute while processing its stdout as INFO,
 # and its stderr as ERROR.  Also avoid to exit the loop on error.
 while true; do
-  { php -f cron.php || true 2>&1 1>&3 | log_line ERROR >&2; } 3>&1 | log_line INFO
+  { php -f cron.php 2>&1 1>&3 || true | log_line ERROR >&2; } 3>&1 | log_line INFO
   sleep 60
 done
