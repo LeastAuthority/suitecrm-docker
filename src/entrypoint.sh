@@ -18,7 +18,7 @@ __CWD="$(pwd)"
 # Credits: https://github.com/MariaDB/mariadb-docker/blob/master/docker-entrypoint.sh
 suitecrm_log() {
   local type="${1^^}"; shift
-  printf '%s %s entrypoint: %s\n' "$(date "+%F %T,%3N")" "$type" "$*"
+  printf '%s %s entrypoint: %s\n' "$(date "+%F %T.%6N")" "$type" "$*"
 }
 suitecrm_info() {
   suitecrm_log INFO "$@"
