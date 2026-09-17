@@ -26,8 +26,9 @@ For instance:
 SUITECRM_DATABASE_NAME=my_suitecrm
 SUITECRM_DATABASE_USER=my_suitecrm
 SUITECRM_DATABASE_PASSWORD=my_secret
-SUITECRM_HTTP_PORT=80
-SUITECRM_LOG_ACCESS_MAX_LEN=10M
+SUITECRM_HTTP_PORT=80                # Overwrite the default=8080
+SUITECRM_LOG_ACCESS_MAX_NUM=1        # Effectively disabling the rotation in multiple files
+SUITECRM_LOG_ACCESS_MAX_LEN=1M       # The single log file will be overwritten when reaching 1M
 ```
 
 ## Usage
