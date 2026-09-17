@@ -44,6 +44,9 @@ fix_perm () {
   [ -f config_override.php ] || echo '<?php' > config_override.php
   [ -f .htaccess ] || touch .htaccess
   [ -d php-sessions ] || mkdir php-sessions
+  [ -d "${SUITECRM_LOG_DIR}" ] || mkdir "${SUITECRM_LOG_DIR}"
+  chown --reference /var/log/apache2 "${SUITECRM_LOG_DIR}"
+  chmod --reference /var/log/apache2 "${SUITECRM_LOG_DIR}"
   chown -R "${WEB_USER}":"${WEB_GROUP}" .
   chmod -R u+wrX,go+rX,go-w .
   chmod -R ug+wrX cache custom modules themes data upload config_override.php .htaccess php-sessions
@@ -61,6 +64,8 @@ ensure_line () {
 adapt_config () {
   # We need a new line to work at the end of config_override.php
   sed -i -e '$a\' config_override.php
+  # Use a separated directory for the logs
+  ensure_line "\$sugar_config['log_dir'] = '${SUITECRM_LOG_DIR}';" config_override.php
   # The apache user needs to be accepted for the cron jobs
   ensure_line "\$sugar_config['cron']['allowed_cron_users'][-1] = '${WEB_USER}';" config_override.php
 }
@@ -86,7 +91,7 @@ if [ -s suitecrm_version.php ]; then
       ./vendor/bin/robo cache:clean --force
       ./vendor/bin/robo upgrade:suite \
       "${SUITECRM_SRC_DIR}"/"${SUITECRM_UPGRADE_ZIP}" \
-      ./suitecrm_upgrade.log \
+      "${SUITECRM_LOG_DIR}"/upgrade.log \
       . "${SUITECRM_ADMIN_USER}"
       fix_perm
     else
