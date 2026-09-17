@@ -70,10 +70,6 @@ adapt_config () {
   ensure_line "\$sugar_config['cron']['allowed_cron_users'][-1] = '${WEB_USER}';" config_override.php
 }
 
-migrate_logs () {
-  true 
-}
-
 suitecrm_info "Initialization process started"
 
 # Ensure work is done in the state directory
@@ -95,7 +91,7 @@ if [ -s suitecrm_version.php ]; then
       ./vendor/bin/robo cache:clean --force
       ./vendor/bin/robo upgrade:suite \
       "${SUITECRM_SRC_DIR}"/"${SUITECRM_UPGRADE_ZIP}" \
-      . "${SUITECRM_LOG_DIR}"/upgrade.log \
+      "${SUITECRM_LOG_DIR}"/upgrade.log \
       . "${SUITECRM_ADMIN_USER}"
       fix_perm
     else
