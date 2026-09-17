@@ -88,7 +88,6 @@ if [ -s suitecrm_version.php ]; then
     UPGRADE_VERSION_REX=${SUITECRM_UPGRADE_VERSION//./\\.}
     UPGRADE_VERSION_REX=${UPGRADE_VERSION_REX/%x/}
     if [[ "${CURRENT_VERSION}" =~ ${UPGRADE_VERSION_REX} ]]; then
-      ./vendor/bin/robo cache:clean --force
       ./vendor/bin/robo upgrade:suite \
       "${SUITECRM_SRC_DIR}"/"${SUITECRM_UPGRADE_ZIP}" \
       "${SUITECRM_LOG_DIR}"/upgrade.log \

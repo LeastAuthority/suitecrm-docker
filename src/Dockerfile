@@ -65,15 +65,15 @@ RUN chmod 0755 /usr/local/bin/cron.sh \
     /var/log/cron.log
 
 USER www-data
-ENV SUITECRM_VERSION=7.15.1 \
-    SUITECRM_CHECKSUM=468b811addd21dfb29d411ee6e815dbdf7099f912347e88cd3e8d010d829db7a
+ENV SUITECRM_VERSION=7.15.2 \
+    SUITECRM_CHECKSUM=9d66c7f6e14f4f1dc4c4605185be6fb97ad1902c0026ff326a7c20e9a4901180
 ENV SUITECRM_ZIP=SuiteCRM-"${SUITECRM_VERSION}".zip
 RUN curl --location --no-progress-meter --output "${SUITECRM_SRC_DIR}"/"${SUITECRM_ZIP}" \
     https://github.com/SuiteCRM/SuiteCRM/releases/download/v"${SUITECRM_VERSION}"/"${SUITECRM_ZIP}" \
     && test "$(sha256sum "${SUITECRM_SRC_DIR}"/"${SUITECRM_ZIP}" | cut -d' ' -f1)" = "${SUITECRM_CHECKSUM}"
 
-ENV SUITECRM_UPGRADE_VERSION=7.14.x \
-    SUITECRM_UPGRADE_CHECKSUM=1541575052121d878a8981a1cead521a89cca1191946e2b7f886baef16b00b74
+ENV SUITECRM_UPGRADE_VERSION=7.15.x \
+    SUITECRM_UPGRADE_CHECKSUM=460111b4aaccc704ca961bf6cbda9955df352df8ebd09f8282b33ce67d69f5c9
 ENV SUITECRM_UPGRADE_ZIP="SuiteCRM-Upgrade-${SUITECRM_UPGRADE_VERSION}-to-${SUITECRM_VERSION}.zip"
 RUN curl --location --no-progress-meter --output "${SUITECRM_SRC_DIR}"/"${SUITECRM_UPGRADE_ZIP}" \
     https://github.com/SuiteCRM/SuiteCRM/releases/download/v"${SUITECRM_VERSION}"/"${SUITECRM_UPGRADE_ZIP}" \
