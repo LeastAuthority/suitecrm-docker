@@ -47,7 +47,9 @@ fix_perm () {
   [ -d "${SUITECRM_LOG_DIR}" ] || mkdir "${SUITECRM_LOG_DIR}"
   chown --reference /var/log/apache2 "${SUITECRM_LOG_DIR}"
   chmod --reference /var/log/apache2 "${SUITECRM_LOG_DIR}"
-  chown -R "${WEB_USER}":"${WEB_GROUP}" .
+  rm -rf /var/log/apache2
+  ln -s "${SUITECRM_LOG_DIR}" /var/log/apache2
+  chown -R "${WEB_USER}":"${WEB_GROUP}" . "${SUITECRM_LOG_DIR}"
   chmod -R u+wrX,go+rX,go-w .
   chmod -R ug+wrX cache custom modules themes data upload config_override.php .htaccess php-sessions
   chmod +x vendor/bin/*
