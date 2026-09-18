@@ -1,12 +1,11 @@
-FROM php:8.3-apache-bookworm@sha256:fa8852a2e01747ffe8c8768bfd6bbc2f296f974aa0de90ee157a66664996d263
+FROM php:8.3-apache-bookworm@sha256:fa8852a2e01747ffe8c8768bfd6bbc2f296f974aa0de90ee157a66664996d263 AS base
 
-ENV TZ=UTC
+# For the build-time dependencies
+FROM base AS builder
 
 RUN apt-get -q clean && \
     apt-get -q update && \
     apt-get install -y --no-install-recommends \
-    curl \
-    default-mysql-client \
     libcurl4-openssl-dev \
     libfreetype6-dev \
     libicu-dev \
@@ -15,8 +14,6 @@ RUN apt-get -q clean && \
     libpng-dev \
     libxml2-dev \
     libzip-dev \
-    supervisor \
-    unzip \
     && \
     apt-get -q clean
 
@@ -36,8 +33,34 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-enable apcu && \
     a2enmod expires headers rewrite
 
+# For the run-time dependencies
+FROM base AS runner
+
+RUN apt-get -q clean && \
+    apt-get -q update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    default-mysql-client \
+    libcurl4 \
+    libfreetype6 \
+    libicu72 \
+    libjpeg62-turbo \
+    libonig5 \
+    libpng16-16 \
+    libxml2 \
+    libzip4 \
+    supervisor \
+    unzip \
+    && \
+    apt-get -q clean
+
+# Copy PHP extensions and related configuration from the builder stage
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
 ENV WEB_USER=www-data \
     WEB_GROUP=www-data \
+    SUITECRM_HTTP_PORT=8080 \
     SUITECRM_STATE_DIR=/var/lib/suitecrm \
     SUITECRM_SRC_DIR=/src/suitecrm \
     SUITECRM_LOG_DIR=/var/log/suitecrm \
@@ -95,7 +118,6 @@ USER root
 
 WORKDIR /var/lib/suitecrm
 
-ENV SUITECRM_HTTP_PORT=8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 CMD curl -fsS "http://127.0.0.1:${SUITECRM_HTTP_PORT}/index.php" >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
