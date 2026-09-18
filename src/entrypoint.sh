@@ -88,11 +88,10 @@ if [ -s suitecrm_version.php ]; then
     UPGRADE_VERSION_REX=${SUITECRM_UPGRADE_VERSION//./\\.}
     UPGRADE_VERSION_REX=${UPGRADE_VERSION_REX/%x/}
     if [[ "${CURRENT_VERSION}" =~ ${UPGRADE_VERSION_REX} ]]; then
-      ./vendor/bin/robo upgrade:suite \
+      gosu "${WEB_USER}":"${WEB_GROUP}" ./vendor/bin/robo upgrade:suite \
       "${SUITECRM_SRC_DIR}"/"${SUITECRM_UPGRADE_ZIP}" \
       "${SUITECRM_LOG_DIR}"/upgrade.log \
       . "${SUITECRM_ADMIN_USER}"
-      fix_perm
     else
       suitecrm_error "Can not upgrade this version!"
     fi
@@ -102,7 +101,7 @@ else
   # Create a symlink for the sub-directory we want to skip
   ln -s . SuiteCRM-"${SUITECRM_VERSION}"
   # Extract the archive in the state directory
-  unzip -q "${SUITECRM_SRC_DIR}"/"${SUITECRM_ZIP}" -d .
+  gosu "${WEB_USER}":"${WEB_GROUP}" unzip -q "${SUITECRM_SRC_DIR}"/"${SUITECRM_ZIP}" -d .
   # Remove the symlink - the sub-directory has been skipped
   rm SuiteCRM-"${SUITECRM_VERSION}"
   fix_perm
