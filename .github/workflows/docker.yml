@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/docker.yml'
       - 'docker-compose.yml'
       - 'src/**'
   pull_request:
     paths:
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/docker.yml'
       - 'docker-compose.yml'
       - 'src/**'
   workflow_dispatch:
@@ -40,7 +40,7 @@ jobs:
         id: get_version
         run: |
           echo "SUITECRM_VERSION=$(grep -Po 'SUITECRM_VERSION=[.\d]+' src/Dockerfile | cut -d'=' -f2)" >> $GITHUB_ENV
-          echo "SUITECRM_BUILD=$(date "+%Y%M%d%H%m")" >> $GITHUB_ENV
+          echo "SUITECRM_BUILD=$(date "+%Y%m%d%H%M")" >> $GITHUB_ENV
 
       - name: Build
         id: build
@@ -73,7 +73,7 @@ jobs:
             --retry-delay 1 \
             --retry-all-errors \
             --retry-connrefused \
-            http://127.0.0.1:"${SUITECRM_HTTP_PORT}"/ \
+            http://127.0.0.1:"${SUITECRM_HTTP_PORT}"/index.php \
           || { \
             echo ":x: Home page not found!" >> $GITHUB_STEP_SUMMARY; \
             RET=1; \
