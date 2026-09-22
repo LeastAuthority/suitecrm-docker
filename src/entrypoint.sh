@@ -92,6 +92,8 @@ adapt_config () {
   ensure_line "\$sugar_config['log_dir'] = '${SUITECRM_LOG_DIR}';" config_override.php
   # The apache user needs to be accepted for the cron jobs
   ensure_line "\$sugar_config['cron']['allowed_cron_users'][-1] = '${WEB_USER}';" config_override.php
+  # Override database password when supplied through the environment
+  ensure_line "if (getenv('SUITECRM_DATABASE_PASSWORD') !== false && getenv('SUITECRM_DATABASE_PASSWORD') !== '') { \$sugar_config['dbconfig']['db_password'] = getenv('SUITECRM_DATABASE_PASSWORD'); }" config_override.php
 }
 
 suitecrm_info "Initialization process started"
