@@ -107,6 +107,7 @@ file_env SUITECRM_ADMIN_PASSWORD
 
 if [ -s suitecrm_version.php ]; then
   fix_perm
+  adapt_config
   CURRENT_VERSION="$(grep -Po '(?<=^\$suitecrm_version = ).+' "${SUITECRM_STATE_DIR}"/suitecrm_version.php | cut -d"'" -f2)"
   suitecrm_info "Version ${CURRENT_VERSION} detected"
   if [ ! -s config.php ]; then
@@ -136,10 +137,9 @@ else
   # Remove the symlink - the sub-directory has been skipped
   rm SuiteCRM-"${SUITECRM_VERSION}"
   fix_perm
+  adapt_config
   suitecrm_info "Installation completed"
   suitecrm_warn "Not yet configured! Visit install.php"
 fi
-
-adapt_config
 
 exec "$@"
