@@ -53,6 +53,30 @@ fix_perm () {
   chmod +x vendor/bin/*
 }
 
+# usage: file_env VAR [DEFAULT]
+#    ie: file_env 'XYZ_DB_PASSWORD' 'example'
+# (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
+#  "$XYZ_DB_PASSWORD" from a file, especially for Docker's secrets feature)
+# Credits: https://github.com/MariaDB/mariadb-docker/blob/master/docker-entrypoint.sh
+file_env() {
+  local var="$1"
+  local fileVar="${var}_FILE"
+  local def="${2:-}"
+  if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
+    echo "[Entrypoint]: Both $var and $fileVar are set (but are exclusive)"
+    exit 1
+  fi
+  local val="$def"
+  if [ "${!var:-}" ]; then
+    val="${!var}"
+  elif [ "${!fileVar:-}" ]; then
+    val="$(< "${!fileVar}")"
+  fi
+  export "$var"="$val"
+  unset "$fileVar"
+}
+
+echo "[Entrypoint]: SuiteCRM init process started."
 # Ensure a line is present in a file
 ensure_line () {
   LINE="${1:?No line specified!}"
@@ -68,6 +92,8 @@ adapt_config () {
   ensure_line "\$sugar_config['log_dir'] = '${SUITECRM_LOG_DIR}';" config_override.php
   # The apache user needs to be accepted for the cron jobs
   ensure_line "\$sugar_config['cron']['allowed_cron_users'][-1] = '${WEB_USER}';" config_override.php
+  # Override database password when supplied through the environment
+  ensure_line "if (getenv('SUITECRM_DATABASE_PASSWORD') !== false && getenv('SUITECRM_DATABASE_PASSWORD') !== '') { \$sugar_config['dbconfig']['db_password'] = getenv('SUITECRM_DATABASE_PASSWORD'); }" config_override.php
 }
 
 suitecrm_info "Initialization process started"
@@ -75,8 +101,12 @@ suitecrm_info "Initialization process started"
 # Ensure work is done in the state directory
 [ "${__CWD}" = "${SUITECRM_STATE_DIR}" ] || cd "${SUITECRM_STATE_DIR}"
 
+# Load database secret as environment variable from file, if provided
+file_env SUITECRM_DATABASE_PASSWORD
+
 if [ -s suitecrm_version.php ]; then
   fix_perm
+  adapt_config
   CURRENT_VERSION="$(grep -Po '(?<=^\$suitecrm_version = ).+' "${SUITECRM_STATE_DIR}"/suitecrm_version.php | cut -d"'" -f2)"
   suitecrm_info "Version ${CURRENT_VERSION} detected"
   if [ ! -s config.php ]; then
@@ -106,10 +136,9 @@ else
   # Remove the symlink - the sub-directory has been skipped
   rm SuiteCRM-"${SUITECRM_VERSION}"
   fix_perm
+  adapt_config
   suitecrm_info "Installation completed"
   suitecrm_warn "Not yet configured! Visit install.php"
 fi
-
-adapt_config
 
 exec "$@"
