@@ -101,9 +101,8 @@ suitecrm_info "Initialization process started"
 # Ensure work is done in the state directory
 [ "${__CWD}" = "${SUITECRM_STATE_DIR}" ] || cd "${SUITECRM_STATE_DIR}"
 
-# Load secrets as environment variable from files, if provided
+# Load database secret as environment variable from file, if provided
 file_env SUITECRM_DATABASE_PASSWORD
-file_env SUITECRM_ADMIN_PASSWORD
 
 if [ -s suitecrm_version.php ]; then
   fix_perm
