@@ -1,4 +1,4 @@
-FROM php:8.3-apache-bookworm@sha256:fa8852a2e01747ffe8c8768bfd6bbc2f296f974aa0de90ee157a66664996d263 AS base
+FROM php:8.3.36-apache-bookworm@sha256:3bf3200166b7c3236ee7b33243c794f72c650980161bfb3c9ede9d94e2b04615 AS base
 
 # For the build-time dependencies
 FROM base AS builder
@@ -107,7 +107,7 @@ LABEL org.opencontainers.image.authors="LeastAuthority" \
       org.opencontainers.image.title="SuiteCRM" \
       org.opencontainers.image.description="SuiteCRM - Open source CRM for the world" \
       org.opencontainers.image.documentation="https://github.com/LeastAuthority/suitecrm-docker" \
-      org.opencontainers.image.base.name="docker.io/library/php:8.3-apache-bookworm" \
+      org.opencontainers.image.base.name="docker.io/library/php:8.3.36-apache-bookworm" \
       org.opencontainers.image.licenses="AGPL-3.0" \
       org.opencontainers.image.source="https://github.com/LeastAuthority/suitecrm-docker" \
       org.opencontainers.image.vendor="LeastAuthority" \
