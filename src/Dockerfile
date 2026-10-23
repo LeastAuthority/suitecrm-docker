@@ -41,6 +41,7 @@ RUN apt-get -q clean && \
     apt-get install -y --no-install-recommends \
     curl \
     default-mysql-client \
+    gosu \
     libcurl4 \
     libfreetype6 \
     libicu72 \
@@ -118,7 +119,7 @@ USER root
 
 WORKDIR /var/lib/suitecrm
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 CMD curl -fsS "http://127.0.0.1:${SUITECRM_HTTP_PORT}/index.php" >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 CMD gosu "${WEB_USER}":"${WEB_GROUP}" curl -fsS "http://127.0.0.1:${SUITECRM_HTTP_PORT}/index.php" >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/suitecrm.conf"]
